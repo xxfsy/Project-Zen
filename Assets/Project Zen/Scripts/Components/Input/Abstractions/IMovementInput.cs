@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-public abstract class BaseInput
+public interface IMovementInput
 {
-    public event UnityAction<Vector2> OnAimInput;
-
     public event UnityAction<Vector2> OnMoveInput;
 }
