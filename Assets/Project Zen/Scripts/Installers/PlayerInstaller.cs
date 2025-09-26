@@ -4,27 +4,45 @@ using Zenject;
 
 public class PlayerInstaller : MonoInstaller
 {
-    [SerializeField] private Player _playerPrefab;
+    [SerializeField] private PlayerController _playerPrefab;
     [SerializeField] private Transform _playerSpawnPoint;
 
-    [SerializeField] private PlayerConfig _playerConfig; // сделать потом например rigidbodyMovementComponent и с помощью этого флага проверять какой компонент сейчас забиндить. Грубо говоря это сейчас вместо конфига
+    [SerializeField] private PlayerConfig _playerConfig; 
 
     public override void InstallBindings()
     {
-        Player player = Container.InstantiatePrefabForComponent<Player>(_playerPrefab, _playerSpawnPoint);
-        Container.Bind<IDisposable>().FromInstance(player);
+        PlayerController player = Instantiate(_playerPrefab, _playerSpawnPoint.position, Quaternion.identity);
+        Container.Bind<IDisposable>().FromInstance(player).AsSingle();
 
-        if (SystemInfo.deviceType == DeviceType.Desktop)
+        switch(SystemInfo.deviceType)
         {
-            Container.Bind<InputSystem_Actions>().AsSingle();
-            Container.BindInterfacesTo<DesktopInput>().AsSingle();
+            case DeviceType.Desktop:
+                Container.Bind<InputSystem_Actions>().AsSingle();
+                Container.BindInterfacesTo<DesktopInput>().AsSingle();
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
-        if (_playerConfig.IsCharacterControllerMovementComponent)
+        switch(_playerConfig.MovementComponentTypeWithSpeed.MovementComponentType)
         {
-            CharacterController _playerCharacterController = player.GetComponent<CharacterController>();
+            case MovementComponentTypes.CharacterController:
+                CharacterController _playerCharacterController = player.GetComponent<CharacterController>();
+                Container.Bind<BaseMovementComponent>().To<CharacterControllerMovementComponent>().AsSingle().WithArguments(_playerCharacterController, _playerConfig.MovementComponentTypeWithSpeed.Speed);
+                break;
 
-            Container.Bind<BaseMovementComponent>().To<CharacterControllerMovementComponent>().AsSingle().WithArguments(_playerCharacterController);
+            //case MovementComponentTypes.Rigidbody:
+            //    Rigidbody _playerRigidbody = player.GetComponent<Rigidbody>();
+            //    Container.Bind<BaseMovementComponent>().To<RigidBodyMovementComponent>().AsSingle().WithArguments(_playerRigidbody);
+            //    break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
         }
+
+        Container.Bind<WeaponsCentricAttackComponent>().AsSingle().WithArguments(new MeleeWeapon()); // new MeleeWeapon() временная заглушка, потом создать фабрику и по конфигу получать стартовое оружие из фабрики
+
+        Container.Inject(player); // Inject-им вручную так как сначала надо забиндить все зависимости
     }
 }

@@ -4,7 +4,7 @@ public class CharacterControllerMovementComponent : BaseMovementComponent
 {
     private CharacterController _characterController;
 
-    public CharacterControllerMovementComponent(CharacterController characterController)
+    public CharacterControllerMovementComponent(CharacterController characterController, float speed = 1f) : base (speed) 
     {
         _characterController = characterController;
 
@@ -15,6 +15,11 @@ public class CharacterControllerMovementComponent : BaseMovementComponent
 
     public override void Move(Vector2 movementDirection)
     {
-        _characterController.Move(new Vector3(movementDirection.x, 0, movementDirection.y));
+        Vector3 movementDirectionV3 = new Vector3(movementDirection.x, 0, movementDirection.y);
+
+        if(movementDirectionV3.magnitude > 1f)
+            movementDirectionV3.Normalize();
+
+        _characterController.Move(movementDirectionV3 * speed * Time.deltaTime);
     }
 }

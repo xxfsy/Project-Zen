@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using UnityEngine.Events;
+﻿using UnityEngine.Events;
 
-public interface ICombatInput 
+public interface ICombatInput
 {
-    public event UnityAction<Vector2> OnAimInput;
+    public event UnityAction OnAttackPressed;
 }
